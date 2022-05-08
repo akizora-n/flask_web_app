@@ -31,10 +31,13 @@ def create_app(config_key):
     # crud(create, read, update, delete)パッケージからviewsをimportする
     from apps.auth import views as auth_views
     from apps.crud import views as crud_views
+    from apps.detector import views as dt_views
 
     # register_blueprintを使いviewsのcrudをアプリへ登録する
     app.register_blueprint(crud_views.crud, url_prefix="/crud")
     # register_blueprintを使いviewsのauthをアプリへ登録する
     app.register_blueprint(auth_views.auth, url_prefix="/auth")
+    # register_blueprintを使いviewのdtをアプリへ登録する
+    app.register_blueprint(dt_views.dt)
 
     return app
