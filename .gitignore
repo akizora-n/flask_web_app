@@ -139,7 +139,7 @@ ENV/
 env.bak/
 venv.bak/
 
-/flaskenv/*
+/flaskenv/
 
 # Spyder project settings
 .spyderproject
