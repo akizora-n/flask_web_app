@@ -76,6 +76,7 @@ db.sqlite3-journal
 instance/
 *.sqlite
 migrations/
+images/
 
 # Scrapy stuff:
 .scrapy
