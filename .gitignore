@@ -74,9 +74,12 @@ db.sqlite3-journal
 
 # Flask stuff:
 instance/
+
+# ======個人用===========
 *.sqlite
 migrations/
 images/
+*.pt
 
 # Scrapy stuff:
 .scrapy
