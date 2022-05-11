@@ -16,6 +16,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -67,7 +68,6 @@ def image_file(filename):
 
 
 @dt.route("/upload", methods=["GET", "POST"])
-# ログイン必須とする
 @login_required
 def upload_image():
     form = UploadImageForm()
@@ -141,6 +141,68 @@ def delete_image(image_id):
     return redirect(url_for("detector.index"))
 
 
+@dt.route("/image/search", methods=["GET"])
+def search():
+    # 画像一覧を取得する
+    user_images = db.session.query(User, UserImage).join(
+        UserImage, User.id == UserImage.user_id
+    )
+
+    # GETパラメータから検索ワードを取得する
+    search_text = request.args.get("search")
+    user_image_tag_dict = dict()
+    filtered_user_images = []
+
+    # user_imagesをループしuser_imagesに紐づくタグ情報を検索する
+    for user_image in user_images:
+        # 検索ワードが空の場合はすべてのタグを取得する
+        if not search_text:
+            # タグ一覧を取得する
+            user_image_tags = (
+                db.session.query(UserImageTag)
+                .filter(UserImageTag.user_image_id == user_image.UserImage.id)
+                .all()
+            )
+        else:
+            # 検索ワードで絞り込んだタグを取得する
+            user_image_tags = (
+                db.session.query(UserImageTag)
+                .filter(UserImageTag.user_image_id == user_image.UserImage.id)
+                .filter(UserImageTag.tag_name.like("%" + search_text + "%"))
+                .all()
+            )
+
+            # タグが見つからなかったら画像を返さない
+            if not user_image_tags:
+                continue
+
+            # タグがある場合はタグ情報を取得しなおす
+            user_image_tags = (
+                db.session.query(UserImageTag)
+                .filter(UserImageTag.user_image_id == user_image.UserImage.id)
+                .all()
+            )
+
+        # user_image_idをキーとする辞書にタグ情報をセットする
+        user_image_tag_dict[user_image.UserImage.id] = user_image_tags
+
+        # 絞り込み結果のuser_image情報を配列にセットする
+        filtered_user_images.append(user_image)
+
+    delete_form = DeleteForm()
+    detector_form = DetectorForm()
+
+    return render_template(
+        "detector/index.html",
+        # 絞り込んだuser_images配列を渡す
+        user_images=filtered_user_images,
+        # 画像に紐づくタグ一覧の辞書を返す
+        user_image_tag_dict=user_image_tag_dict,
+        delete_form=delete_form,
+        detector_form=detector_form,
+    )
+
+
 def make_color(labels):
     # 枠線の色をランダムに決定
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in labels]
@@ -195,11 +257,11 @@ def exec_detect(target_image_path):
     # 推論の実行
     output = model([image_tensor])[0]
 
-    tags = []
+    tags = set()
     result_image = np.array(image.copy())
     # 学習済みモデルが検知した各物体の分だけ画像に追記
     for box, label, score in zip(output["boxes"], output["labels"], output["scores"]):
-        if score > 0.5 and labels[label] not in tags:
+        if score > 0.7:
             # 枠線の色の決定
             color = make_color(labels)
             # 枠線の作成
@@ -211,7 +273,7 @@ def exec_detect(target_image_path):
             cv2 = draw_lines(c1, c2, result_image, line, color)
             # 画像にテキストラベルを追記
             cv2 = draw_texts(result_image, line, c1, cv2, color, labels, label)
-            tags.append(labels[label])
+            tags.add(labels[label])
 
     # 検知後の画像ファイルを生成する
     detected_image_file_name = str(uuid.uuid4()) + ".jpg"
@@ -226,7 +288,7 @@ def exec_detect(target_image_path):
     return tags, detected_image_file_name
 
 
-def save_detected_image_tags(user_image, tags: list, detected_image_file_name):
+def save_detected_image_tags(user_image, tags: set, detected_image_file_name):
     # 検知後画像の保存先パスをDBに保存する
     user_image.image_path = detected_image_file_name
     # 検知フラグをTrueにする
