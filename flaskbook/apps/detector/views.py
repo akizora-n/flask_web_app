@@ -203,6 +203,11 @@ def search():
     )
 
 
+@dt.errorhandler(404)
+def page_not_found(e):
+    return render_template("detector/404.html"), 404
+
+
 def make_color(labels):
     # 枠線の色をランダムに決定
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in labels]
