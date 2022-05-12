@@ -144,6 +144,7 @@ env.bak/
 venv.bak/
 
 /flaskenv/
+flask_apienv/
 
 # Spyder project settings
 .spyderproject
