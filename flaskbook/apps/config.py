@@ -5,9 +5,10 @@ basedir = Path(__file__).parent.parent
 
 # BaseConfigクラスを作成する
 class BaseConfig:
+
+    # 画像アップロード先にapps/imagesを指定する
     SECRET_KEY = os.environ.get("SECRET_KEY")
     WTF_CSRF_SECRET_KEY = os.environ.get("WTF_CSRF_SECRET_KEY")
-    # 画像アップロード先にapps/imagesを指定する
     UPLOAD_FOLDER = str(Path(basedir, "apps", "images"))
     LABELS = [
         "unlabeled",
@@ -113,9 +114,13 @@ class LocalConfig(BaseConfig):
 
 # BaseConfigクラスを継承してTestingConfigクラスを作成する
 class TestingConfig(BaseConfig):
+    SECRET_KEY = "fjafajfeljfajfaljfl"  # 適当なキー
+    WTF_CSRF_SECRET_KEY = "fjefaljaljeljfalijfael"  # 適当なキー
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{basedir}/local.sqlite"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
+    # 画像アップロード先にtests/detector/imagesを指定する
+    UPLOAD_FOLDER = str(Path(basedir, "tests", "detector", "images"))
 
 
 # config辞書にマッピングする

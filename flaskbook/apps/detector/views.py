@@ -141,7 +141,7 @@ def delete_image(image_id):
     return redirect(url_for("detector.index"))
 
 
-@dt.route("/image/search", methods=["GET"])
+@dt.route("/images/search", methods=["GET"])
 def search():
     # 画像一覧を取得する
     user_images = db.session.query(User, UserImage).join(
